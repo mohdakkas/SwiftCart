@@ -1,0 +1,35 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: swiftcart-mysql
+    environment:
+      MYSQL_DATABASE: swiftcart
+      MYSQL_USER: swiftcart
+      MYSQL_PASSWORD: swiftcart
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: swiftcart-api
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/swiftcart?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: swiftcart
+      SPRING_DATASOURCE_PASSWORD: swiftcart
+      JWT_SECRET: change-this-secret-in-production-change-this-secret
+    ports:
+      - "8080:8080"
+
+volumes:
+  mysql-data:
