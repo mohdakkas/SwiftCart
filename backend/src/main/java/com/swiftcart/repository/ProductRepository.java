@@ -16,7 +16,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("""
         select p from Product p
         where p.active = true
-          and (:query is null or lower(p.name) like lower(concat('%', :query, '%')) or lower(p.description) like lower(concat('%', :query, '%')))
+          and (:query is null or lower(p.name) like lower(concat('%', :query, '%')) or lower(p.brand) like lower(concat('%', :query, '%')) or lower(p.description) like lower(concat('%', :query, '%')))
           and (:categoryId is null or p.category.id = :categoryId)
         """)
     Page<Product> search(@Param("query") String query, @Param("categoryId") Long categoryId, Pageable pageable);
@@ -30,3 +30,4 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
         """)
     List<Object[]> findTopSellingProducts(Pageable pageable);
 }
+

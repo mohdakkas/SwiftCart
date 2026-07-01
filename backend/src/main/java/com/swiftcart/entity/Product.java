@@ -30,6 +30,9 @@ public class Product extends BaseEntity {
     @Column(nullable = false, length = 220)
     private String name;
 
+    @Column(nullable = false, length = 120)
+    private String brand = "SwiftCart";
+
     @Column(nullable = false, unique = true, length = 240)
     private String slug;
 
@@ -60,3 +63,5 @@ public class Product extends BaseEntity {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductVariant> variants = new ArrayList<>();
 }
+
+

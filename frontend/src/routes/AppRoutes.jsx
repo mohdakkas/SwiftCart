@@ -18,6 +18,8 @@ import { Profile } from '../pages/Profile.jsx';
 import { Addresses } from '../pages/Addresses.jsx';
 import { Wishlist } from '../pages/Wishlist.jsx';
 import { UserDashboard } from '../pages/UserDashboard.jsx';
+import { PaymentSuccess } from '../pages/PaymentSuccess.jsx';
+import { PaymentFailed } from '../pages/PaymentFailed.jsx';
 import { AdminDashboard } from '../pages/admin/AdminDashboard.jsx';
 import { AdminOrdersPage } from '../pages/admin/AdminOrdersPage.jsx';
 import { AdminProductsPage } from '../pages/admin/AdminProductsPage.jsx';
@@ -42,6 +44,8 @@ export function AppRoutes() {
           <Route path="wishlist" element={<Wishlist />} />
           <Route path="cart" element={<Cart />} />
           <Route path="checkout" element={<Checkout />} />
+          <Route path="payment-success" element={<PaymentSuccess />} />
+          <Route path="payment-failed" element={<PaymentFailed />} />
           <Route path="orders" element={<Orders />} />
           <Route path="orders/:orderNumber" element={<OrderDetails />} />
           <Route path="profile" element={<Profile />} />

@@ -38,7 +38,7 @@ public class SecurityConfig {
                                 "/", "/index.html", "/assets/**", "/uploads/**",
                                 "/login", "/register", "/forgot-password",
                                 "/products", "/products/**", "/categories", "/search",
-                                "/dashboard", "/wishlist", "/cart", "/checkout", "/orders", "/profile", "/addresses",
+                                "/dashboard", "/wishlist", "/cart", "/checkout", "/payment-success", "/payment-failed", "/orders", "/profile", "/addresses",
                                 "/admin", "/admin/**", "/unauthorized",
                                 "/api/v1", "/api/v1/swagger-ui.html", "/api/v1/swagger-ui/**", "/api/v1/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/actuator/health"
                         ).permitAll()
@@ -57,7 +57,7 @@ public class SecurityConfig {
                                 "/api/v1/orders/manage/**",
                                 "/api/v1/payments/manage/**"
                         ).hasRole("ADMIN")
-                        .requestMatchers("/api/v1/cart", "/api/v1/cart/**", "/api/v1/orders", "/api/v1/orders/**", "/api/v1/wishlist", "/api/v1/wishlist/**", "/api/v1/profile", "/api/v1/profile/**", "/api/v1/reviews", "/api/v1/reviews/**").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers("/api/v1/cart", "/api/v1/cart/**", "/api/v1/orders", "/api/v1/orders/**", "/api/v1/wishlist", "/api/v1/wishlist/**", "/api/v1/profile", "/api/v1/profile/**", "/api/v1/payments", "/api/v1/payments/**", "/api/v1/reviews", "/api/v1/reviews/**").hasAnyRole("USER", "ADMIN")
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
@@ -81,3 +81,5 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 }
+
+

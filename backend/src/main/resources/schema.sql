@@ -205,6 +205,9 @@ CREATE TABLE IF NOT EXISTS payments (
   amount DECIMAL(12,2) NOT NULL,
   payment_date TIMESTAMP,
   gateway_message VARCHAR(500),
+  razorpay_order_id VARCHAR(120),
+  razorpay_payment_id VARCHAR(120),
+  razorpay_signature VARCHAR(512),
   CONSTRAINT fk_payments_order FOREIGN KEY (order_id) REFERENCES orders(id)
 );
 
@@ -222,3 +225,7 @@ CREATE TABLE IF NOT EXISTS reviews (
   CONSTRAINT fk_reviews_product FOREIGN KEY (product_id) REFERENCES products(id),
   CONSTRAINT uk_reviews_user_product UNIQUE (user_id, product_id)
 );
+
+
+
+

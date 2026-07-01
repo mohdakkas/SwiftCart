@@ -13,6 +13,7 @@ public class ProductMapper {
                 product.getId(),
                 product.getSku(),
                 product.getName(),
+                product.getBrand(),
                 product.getSlug(),
                 product.getDescription(),
                 product.getPrice(),
@@ -34,3 +35,6 @@ public class ProductMapper {
         );
     }
 }
+
+
+

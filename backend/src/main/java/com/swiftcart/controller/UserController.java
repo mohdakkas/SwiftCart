@@ -55,3 +55,5 @@ public class UserController {
         return ApiResponse.ok("Users loaded", userService.allUsers());
     }
 }
+
+

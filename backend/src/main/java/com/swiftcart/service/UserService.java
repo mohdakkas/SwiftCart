@@ -16,3 +16,5 @@ public interface UserService {
     UploadProfileImageResponse uploadProfileImage(String email, MultipartFile file) throws IOException;
     List<ProfileResponse> allUsers();
 }
+
+

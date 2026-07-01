@@ -11,7 +11,7 @@ export function ProductCard({ product }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const accessToken = useSelector((state) => state.auth.accessToken);
-  const image = product.images?.[0] ?? 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3';
+  const image = product.imageUrl ?? product.images?.[0] ?? 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3';
   const price = product.salePrice ?? product.price;
   const addToCart = useMutation({
     mutationFn: () => cartService.add({ productId: product.id, quantity: 1 }),
@@ -39,6 +39,7 @@ export function ProductCard({ product }) {
       <div className="grid gap-3 p-4">
         <div>
           <div className="text-xs font-bold uppercase text-signal">{product.category}</div>
+          <div className="text-xs font-semibold text-black/50 dark:text-white/50">{product.brand}</div>
           <Link to={`/products/${product.id}`} className="line-clamp-2 text-base font-black">{product.name}</Link>
           <div className="mt-1 text-sm text-black/60 dark:text-white/60">{product.averageRating} rating</div>
         </div>
@@ -49,8 +50,9 @@ export function ProductCard({ product }) {
           </div>
           <button aria-label="Add to wishlist" className="rounded-full p-2 hover:bg-black/5 dark:hover:bg-white/10"><Heart size={18} /></button>
         </div>
-        <Button onClick={handleAddToCart} disabled={addToCart.isPending}><ShoppingBag size={16} /> Add</Button>
+        <Button onClick={handleAddToCart} disabled={addToCart.isPending || product.stockQuantity <= 0}><ShoppingBag size={16} /> {product.stockQuantity <= 0 ? 'Out of stock' : 'Add'}</Button>
       </div>
     </motion.article>
   );
 }
+

@@ -2,6 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { orderService } from '../services/orderService.js';
 
+function AddressLine({ address }) {
+  if (!address) return null;
+  return <p className="mt-2 text-sm text-black/60 dark:text-white/65">Ship to: {address.fullName}, {address.addressLine1}, {address.city}, {address.state} {address.postalCode}</p>;
+}
+
 export function Orders() {
   const { data } = useQuery({ queryKey: ['orders'], queryFn: orderService.history, retry: false });
   const orders = data?.content ?? [];
@@ -18,6 +23,7 @@ export function Orders() {
               <span>Rs. {Number(order.totalAmount).toLocaleString('en-IN')}</span>
               <Link className="font-bold text-signal" to={`/orders/${order.orderNumber}`}>Track order</Link>
             </div>
+            <AddressLine address={order.shippingAddress} />
           </article>
         ))}
       </div>

@@ -1,5 +1,6 @@
 package com.swiftcart.dto;
 
+import com.swiftcart.dto.AddressDtos.AddressResponse;
 import com.swiftcart.enums.OrderStatus;
 import com.swiftcart.enums.PaymentMethod;
 import com.swiftcart.enums.PaymentStatus;
@@ -22,13 +23,13 @@ public final class OrderDtos {
     public record PaymentResponse(String transactionId, PaymentMethod method, PaymentStatus status, BigDecimal amount, Instant paymentDate) {
     }
 
-    public record OrderResponse(String orderNumber, OrderStatus status, BigDecimal totalAmount, List<OrderLineResponse> items, PaymentResponse payment) {
+    public record OrderResponse(String orderNumber, OrderStatus status, BigDecimal totalAmount, List<OrderLineResponse> items, PaymentResponse payment, AddressResponse shippingAddress) {
     }
 
     public record OrderTrackingResponse(OrderStatus status, String message, Instant updatedAt, boolean completed, boolean current) {
     }
 
-    public record OrderTrackingTimelineResponse(String orderNumber, OrderStatus currentStatus, List<OrderTrackingResponse> history) {
+    public record OrderTrackingTimelineResponse(String orderNumber, OrderStatus currentStatus, List<OrderTrackingResponse> history, AddressResponse shippingAddress) {
     }
 
     public record UpdateOrderStatusRequest(@NotNull OrderStatus status, String message) {

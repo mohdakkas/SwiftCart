@@ -41,4 +41,9 @@ public class Payment extends BaseEntity {
 
     private Instant paymentDate;
     private String gatewayMessage;
+    private String razorpayOrderId;
+    private String razorpayPaymentId;
+
+    @Column(length = 512)
+    private String razorpaySignature;
 }

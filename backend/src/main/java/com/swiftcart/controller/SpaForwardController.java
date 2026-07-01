@@ -18,6 +18,8 @@ public class SpaForwardController {
             "/wishlist",
             "/cart",
             "/checkout",
+            "/payment-success",
+            "/payment-failed",
             "/orders",
             "/profile",
             "/addresses",
