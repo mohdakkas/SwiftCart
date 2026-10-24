@@ -1,34 +1,77 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { Star, Truck } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useSelector } from 'react-redux';
+import { toast } from 'react-toastify';
+import { ShoppingBag, Star, Truck, Zap } from 'lucide-react';
 import { catalogService } from '../services/catalogService.js';
+import { cartService } from '../services/cartService.js';
 import { Button } from '../components/Button.jsx';
 import { ProductReviews } from '../components/ProductReviews.jsx';
 import { StarRating } from '../components/StarRating.jsx';
 
 export function ProductDetails() {
   const { id } = useParams();
-  const { data } = useQuery({ queryKey: ['product', id], queryFn: () => catalogService.product(id), retry: false });
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const accessToken = useSelector((state) => state.auth.accessToken);
+  const { data, isLoading, isError } = useQuery({ queryKey: ['product', id], queryFn: () => catalogService.product(id), retry: false });
   const [selectedImage, setSelectedImage] = useState('');
-  const product = data ?? {
-    name: 'SwiftPhone X1',
-    description: 'Flagship phone with OLED display, fast charging, and pro-grade camera.',
-    price: 69999,
-    salePrice: 62999,
-    averageRating: 4.7,
-    reviewCount: 0,
-    stockQuantity: 75,
-    images: ['https://images.unsplash.com/photo-1511707171634-5f897ff02aa9']
-  };
-  const galleryImages = product.productImages?.length
+
+  const product = data;
+  const galleryImages = product?.productImages?.length
     ? product.productImages.map((image) => image.imageUrl)
-    : [product.imageUrl, ...(product.images ?? [])].filter(Boolean);
-  const mainImage = selectedImage || product.imageUrl || galleryImages[0];
+    : [product?.imageUrl, ...(product?.images ?? [])].filter(Boolean);
+  const mainImage = selectedImage || product?.imageUrl || galleryImages[0] || 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3';
+  const outOfStock = Number(product?.stockQuantity ?? 0) <= 0;
+
+  const addToCart = useMutation({
+    mutationFn: () => cartService.add({ productId: product.id, quantity: 1 }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
+      toast.success('Added to cart');
+    },
+    onError: (error) => toast.error(error.response?.data?.message ?? 'Could not add item to cart')
+  });
 
   useEffect(() => {
     setSelectedImage('');
-  }, [id, product.imageUrl]);
+  }, [id, product?.imageUrl]);
+
+  const requireLogin = () => {
+    if (!accessToken) {
+      navigate('/login', { state: { from: `/products/${id}` } });
+      return false;
+    }
+    return true;
+  };
+
+  const handleAddToCart = () => {
+    if (!product || !requireLogin()) {
+      return;
+    }
+    addToCart.mutate();
+  };
+
+  const handleBuyNow = () => {
+    if (!product || !requireLogin()) {
+      return;
+    }
+    addToCart.mutate(undefined, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['cart'] });
+        navigate('/checkout');
+      }
+    });
+  };
+
+  if (isLoading) {
+    return <section className="mx-auto max-w-7xl px-4 py-10"><div className="h-96 animate-pulse rounded-lg bg-white shadow-soft dark:bg-white/5" /></section>;
+  }
+
+  if (isError || !product) {
+    return <section className="mx-auto max-w-3xl px-4 py-10"><div className="rounded-lg bg-red-50 p-6 font-semibold text-red-700">Product could not be loaded.</div></section>;
+  }
 
   return (
     <>
@@ -67,14 +110,15 @@ export function ProductDetails() {
             <span className="text-4xl font-black">Rs. {Number(product.salePrice ?? product.price).toLocaleString('en-IN')}</span>
             {product.salePrice && <span className="pb-1 text-black/45 line-through">Rs. {Number(product.price).toLocaleString('en-IN')}</span>}
           </div>
+          <div className="mt-4 text-sm font-bold text-black/60 dark:text-white/65">{outOfStock ? 'Out of stock' : `${product.stockQuantity} item(s) available`}</div>
           <div className="mt-6 flex items-center gap-2 text-sm font-semibold"><Truck size={18} /> Free delivery on eligible orders</div>
-          <div className="mt-8 flex gap-3">
-            <Button>Add to cart</Button>
-            <Button className="bg-coral text-white dark:bg-coral dark:text-white">Buy now</Button>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Button onClick={handleAddToCart} disabled={addToCart.isPending || outOfStock}><ShoppingBag size={18} /> Add to cart</Button>
+            <Button onClick={handleBuyNow} disabled={addToCart.isPending || outOfStock} className="bg-coral text-white dark:bg-coral dark:text-white"><Zap size={18} /> Buy now</Button>
           </div>
         </div>
       </section>
-      {product.id && <ProductReviews product={product} />}
+      <ProductReviews product={product} />
     </>
   );
 }

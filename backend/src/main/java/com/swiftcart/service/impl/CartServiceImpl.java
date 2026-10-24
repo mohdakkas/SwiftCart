@@ -45,16 +45,26 @@ public class CartServiceImpl implements CartService {
     public CartResponse add(String email, AddCartItemRequest request) {
         Cart cart = cart(email);
         Product product = productRepository.findById(request.productId()).orElseThrow(() -> new ResourceNotFoundException("Product not found"));
-        if (product.getStockQuantity() < request.quantity()) {
-            throw new BusinessException("Requested quantity is not available");
+        if (!product.isActive()) {
+            throw new BusinessException("Product is not available");
         }
+
         CartItem item = cartItemRepository.findByCartIdAndProductId(cart.getId(), product.getId()).orElseGet(CartItem::new);
+        int newQuantity = item.getQuantity() + request.quantity();
+        if (product.getStockQuantity() < newQuantity) {
+            throw new BusinessException("Only " + product.getStockQuantity() + " item(s) available in stock");
+        }
+
+        boolean newItem = item.getId() == null;
         item.setCart(cart);
         item.setProduct(product);
-        item.setQuantity(item.getQuantity() + request.quantity());
+        item.setQuantity(newQuantity);
         item.setUnitPrice(product.getSalePrice() != null ? product.getSalePrice() : product.getPrice());
-        cartItemRepository.save(item);
-        return toResponse(cartRepository.findById(cart.getId()).orElseThrow());
+        CartItem savedItem = cartItemRepository.save(item);
+        if (newItem) {
+            cart.getItems().add(savedItem);
+        }
+        return toResponse(cart);
     }
 
     @Override
@@ -64,6 +74,9 @@ public class CartServiceImpl implements CartService {
         if (!item.getCart().getId().equals(cart.getId())) {
             throw new BusinessException("Cart item does not belong to current user");
         }
+        if (item.getProduct().getStockQuantity() < request.quantity()) {
+            throw new BusinessException("Only " + item.getProduct().getStockQuantity() + " item(s) available in stock");
+        }
         item.setQuantity(request.quantity());
         return toResponse(cart);
     }
@@ -71,8 +84,12 @@ public class CartServiceImpl implements CartService {
     @Override
     public CartResponse remove(String email, Long itemId) {
         Cart cart = cart(email);
-        cart.getItems().removeIf(item -> item.getId().equals(itemId));
-        cartItemRepository.deleteById(itemId);
+        CartItem item = cartItemRepository.findById(itemId).orElseThrow(() -> new ResourceNotFoundException("Cart item not found"));
+        if (!item.getCart().getId().equals(cart.getId())) {
+            throw new BusinessException("Cart item does not belong to current user");
+        }
+        cart.getItems().removeIf(cartItem -> cartItem.getId().equals(itemId));
+        cartItemRepository.delete(item);
         return toResponse(cart);
     }
 
@@ -91,8 +108,7 @@ public class CartServiceImpl implements CartService {
                 .toList();
         BigDecimal subtotal = items.stream().map(CartItemResponse::lineTotal).reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal tax = subtotal.multiply(new BigDecimal("0.18"));
-        BigDecimal shipping = subtotal.compareTo(new BigDecimal("999")) > 0 ? BigDecimal.ZERO : new BigDecimal("99");
+        BigDecimal shipping = subtotal.compareTo(new BigDecimal("999")) > 0 || subtotal.compareTo(BigDecimal.ZERO) == 0 ? BigDecimal.ZERO : new BigDecimal("99");
         return new CartResponse(items, subtotal, tax, shipping, subtotal.add(tax).add(shipping));
     }
 }
-

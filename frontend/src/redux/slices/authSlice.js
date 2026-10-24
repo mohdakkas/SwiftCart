@@ -1,6 +1,17 @@
 import { createSlice } from '@reduxjs/toolkit';
 
-const saved = JSON.parse(localStorage.getItem('swiftcart-auth') ?? 'null');
+function loadSavedAuth() {
+  try {
+    return JSON.parse(localStorage.getItem('swiftcart-auth') ?? 'null');
+  } catch {
+    localStorage.removeItem('swiftcart-auth');
+    localStorage.removeItem('swiftcart-token');
+    localStorage.removeItem('swiftcart-role');
+    return null;
+  }
+}
+
+const saved = loadSavedAuth();
 
 const authSlice = createSlice({
   name: 'auth',

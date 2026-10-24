@@ -15,20 +15,36 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+function clearSession() {
+  store.dispatch(logout());
+  if (!window.location.pathname.startsWith('/login')) {
+    window.location.assign('/login');
+  }
+}
+
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const original = error.config;
+    const original = error.config ?? {};
     const refreshToken = store.getState().auth.refreshToken;
-    if (error.response?.status === 401 && refreshToken && !original._retry) {
+    const isRefreshRequest = original.url?.includes('/auth/refresh-token') || original.url?.includes('/auth/refresh');
+
+    if (error.response?.status === 401 && refreshToken && !original._retry && !isRefreshRequest) {
       original._retry = true;
-      const response = await api.post('/auth/refresh-token', { refreshToken });
-      store.dispatch(setCredentials(response.data.data));
-      original.headers.Authorization = `Bearer ${response.data.data.accessToken}`;
-      return api(original);
+      try {
+        const response = await api.post('/auth/refresh-token', { refreshToken });
+        store.dispatch(setCredentials(response.data.data));
+        original.headers = original.headers ?? {};
+        original.headers.Authorization = `Bearer ${response.data.data.accessToken}`;
+        return api(original);
+      } catch (refreshError) {
+        clearSession();
+        return Promise.reject(refreshError);
+      }
     }
-    if (error.response?.status === 401) {
-      store.dispatch(logout());
+
+    if (error.response?.status === 401 || (isRefreshRequest && error.response?.status >= 400)) {
+      clearSession();
     }
     return Promise.reject(error);
   }

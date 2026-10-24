@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { Eye, EyeOff } from 'lucide-react';
 import { toast } from 'react-toastify';
@@ -16,6 +16,7 @@ export function Login() {
   });
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const onSubmit = async (values) => {
     setServerError('');
@@ -23,7 +24,8 @@ export function Login() {
       const data = await authService.login(values);
       dispatch(setCredentials(data));
       toast.success('Welcome back');
-      navigate(data.role === 'ROLE_ADMIN' ? '/admin' : '/', { replace: true });
+      const redirectTo = data.role === 'ROLE_ADMIN' ? '/admin' : location.state?.from ?? '/';
+      navigate(redirectTo, { replace: true });
     } catch (error) {
       setServerError(error.response?.data?.message ?? 'Invalid email or password');
     }

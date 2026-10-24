@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Heart, ShoppingBag } from 'lucide-react';
+import { Heart, ShoppingBag, Zap } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSelector } from 'react-redux';
@@ -13,22 +13,44 @@ export function ProductCard({ product }) {
   const accessToken = useSelector((state) => state.auth.accessToken);
   const image = product.imageUrl ?? product.images?.[0] ?? 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3';
   const price = product.salePrice ?? product.price;
+
   const addToCart = useMutation({
     mutationFn: () => cartService.add({ productId: product.id, quantity: 1 }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cart'] });
       toast.success('Added to cart');
     },
-    onError: () => toast.error('Could not add item to cart')
+    onError: (error) => toast.error(error.response?.data?.message ?? 'Could not add item to cart')
   });
 
-  const handleAddToCart = () => {
+  const requireLogin = () => {
     if (!accessToken) {
-      navigate('/login');
+      navigate('/login', { state: { from: `/products/${product.id}` } });
+      return false;
+    }
+    return true;
+  };
+
+  const handleAddToCart = () => {
+    if (!requireLogin()) {
       return;
     }
     addToCart.mutate();
   };
+
+  const handleBuyNow = () => {
+    if (!requireLogin()) {
+      return;
+    }
+    addToCart.mutate(undefined, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['cart'] });
+        navigate('/checkout');
+      }
+    });
+  };
+
+  const outOfStock = Number(product.stockQuantity ?? 0) <= 0;
 
   return (
     <motion.article whileHover={{ y: -4 }} className="overflow-hidden rounded-lg border border-black/10 bg-white shadow-sm dark:border-white/10 dark:bg-white/5">
@@ -41,7 +63,7 @@ export function ProductCard({ product }) {
           <div className="text-xs font-bold uppercase text-signal">{product.category}</div>
           <div className="text-xs font-semibold text-black/50 dark:text-white/50">{product.brand}</div>
           <Link to={`/products/${product.id}`} className="line-clamp-2 text-base font-black">{product.name}</Link>
-          <div className="mt-1 text-sm text-black/60 dark:text-white/60">{product.averageRating} rating</div>
+          <div className="mt-1 text-sm text-black/60 dark:text-white/60">{Number(product.averageRating ?? 0).toFixed(1)} rating</div>
         </div>
         <div className="flex items-center justify-between">
           <div>
@@ -50,9 +72,11 @@ export function ProductCard({ product }) {
           </div>
           <button aria-label="Add to wishlist" className="rounded-full p-2 hover:bg-black/5 dark:hover:bg-white/10"><Heart size={18} /></button>
         </div>
-        <Button onClick={handleAddToCart} disabled={addToCart.isPending || product.stockQuantity <= 0}><ShoppingBag size={16} /> {product.stockQuantity <= 0 ? 'Out of stock' : 'Add'}</Button>
+        <div className="grid grid-cols-2 gap-2">
+          <Button onClick={handleAddToCart} disabled={addToCart.isPending || outOfStock}><ShoppingBag size={16} /> {outOfStock ? 'Out' : 'Cart'}</Button>
+          <Button onClick={handleBuyNow} disabled={addToCart.isPending || outOfStock} className="bg-coral text-white dark:bg-coral dark:text-white"><Zap size={16} /> Buy</Button>
+        </div>
       </div>
     </motion.article>
   );
 }
-
