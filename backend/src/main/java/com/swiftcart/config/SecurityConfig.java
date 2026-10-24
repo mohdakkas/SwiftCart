@@ -9,7 +9,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -46,22 +45,18 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(
-            HttpSecurity http,
-            AuthenticationProvider authenticationProvider) throws Exception {
-
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-            // 1. Process CORS preflight requests first using CorsConfigurationSource
+            // 1. Process CORS preflight requests first
             .cors(cors -> cors.configurationSource(corsConfigurationSource))
 
             // 2. Disable CSRF for stateless REST APIs
             .csrf(csrf -> csrf.disable())
 
-            // 3. Stateless session management (JWT based)
+            // 3. Stateless session management
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-            // 4. Custom authentication provider and exception handling
-            .authenticationProvider(authenticationProvider)
+            // 4. Exception handling
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint(authenticationEntryPoint)
                 .accessDeniedHandler(accessDeniedHandler)
@@ -72,28 +67,31 @@ public class SecurityConfig {
                 // Allow all CORS preflight OPTIONS requests unconditionally
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                // Static resources and frontend routes
+                // Static resources and SPA routes
                 .requestMatchers(
                     "/", "/index.html", "/assets/**", "/uploads/**",
                     "/login", "/register", "/forgot-password",
-                    "/products", "/products/**", "/categories", "/search",
-                    "/dashboard", "/wishlist", "/cart", "/checkout", "/payment-success", "/payment-failed", "/orders", "/profile",
+                    "/dashboard", "/wishlist", "/cart", "/checkout", 
+                    "/payment-success", "/payment-failed", "/orders", "/profile",
                     "/admin", "/admin/**", "/unauthorized",
-                    "/api/v1", "/api/v1/swagger-ui.html", "/api/v1/swagger-ui/**", "/api/v1/v3/api-docs/**", "/swagger-ui/**"
+                    "/api/v1", "/api/v1/swagger-ui.html", "/api/v1/swagger-ui/**", 
+                    "/api/v1/v3/api-docs/**", "/swagger-ui/**"
                 ).permitAll()
 
-                // Public auth endpoints
+                // Public auth endpoints (both /auth and /api/v1/auth)
                 .requestMatchers(
                     "/auth/**",
-                    "/api/v1/auth/register",
-                    "/api/v1/auth/login",
-                    "/api/v1/auth/refresh-token",
-                    "/api/v1/auth/refresh"
+                    "/api/v1/auth/**"
                 ).permitAll()
 
-                // Public catalog endpoints (GET)
-                .requestMatchers(HttpMethod.GET, "/api/v1/products/*/reviews").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/v1/products", "/api/v1/products/**", "/api/v1/categories", "/api/v1/categories/**").permitAll()
+                // Public catalog endpoints (both /products and /api/v1/products)
+                .requestMatchers(HttpMethod.GET, 
+                    "/products", "/products/**", 
+                    "/api/v1/products", "/api/v1/products/**",
+                    "/categories", "/categories/**", 
+                    "/api/v1/categories", "/api/v1/categories/**",
+                    "/search", "/search/**"
+                ).permitAll()
 
                 // Admin endpoints
                 .requestMatchers(
@@ -120,13 +118,13 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
 
-            // 6. Register JWT filter before standard username/password filter
+            // 6. JWT Filter
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .build();
     }
 
     @Bean
-    public AuthenticationProvider authenticationProvider(
+    public DaoAuthenticationProvider authenticationProvider(
             UserDetailsService userDetailsService,
             PasswordEncoder passwordEncoder) {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
