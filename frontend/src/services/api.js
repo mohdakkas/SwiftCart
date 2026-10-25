@@ -4,7 +4,7 @@ import { logout, setCredentials } from '../redux/slices/authSlice.js';
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL ?? '/api/v1',
-  timeout: 15_000
+  timeout: 60_000
 });
 
 api.interceptors.request.use((config) => {
