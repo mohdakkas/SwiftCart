@@ -15,7 +15,9 @@ export function ProductListing({ embedded = false }) {
     retry: false
   });
 
-  const products = data?.content ?? [];
+  const products = Array.isArray(data) 
+  ? data 
+  : (data?.content ?? data?.data ?? []);
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-10">
